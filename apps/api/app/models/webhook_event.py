@@ -1,10 +1,7 @@
 from sqlalchemy import Column, String, DateTime, JSON, Boolean
 from sqlalchemy.sql import func
-from apps.api import app
-from apps.api.app import db
-import db
 
-from apps.api.app.db import Base
+from app.db import Base
 
 
 class WebhookEvent(Base):
