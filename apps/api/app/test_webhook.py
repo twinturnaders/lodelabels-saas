@@ -33,7 +33,7 @@ signature = base64.b64encode(hmac.new(SECRET_BYTES, msg, 'sha256').digest()).dec
 
 # 4. Send the POST request to your running server
 req = urllib.request.Request(
-    "http://127.0.0.1:8000/webhooks/whatnot",
+    "https://lodelabels.org/webhooks/whatnot",
     data=payload_json.encode('utf-8'),
     headers={
         "Content-Type": "application/json",

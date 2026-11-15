@@ -12,19 +12,20 @@ from threading import Thread
 
 # Configuration
 SELLER_ID = "seller_123"
-SERVER_URL = "ws://127.0.0.1:8000"
+SERVER_URL = "wss://lodelabels.org"
 RECONNECT_DELAY = 5
 
 class LodeLabelsAgent:
     def __init__(self, root):
         self.root = root
         self.root.title("LodeLabels Print Agent")
-        self.root.geometry("400x300")
+        self.root.geometry("450x500")
         self.root.resizable(False, False)
         
         self.websocket = None
         self.connected = False
         self.selected_printer = None
+        self.last_label_path = None
         
         self.setup_ui()
         self.load_printers()
@@ -36,34 +37,56 @@ class LodeLabelsAgent:
     def setup_ui(self):
         # Title
         title_label = tk.Label(self.root, text="LodeLabels Print Agent", font=("Arial", 16, "bold"))
-        title_label.pack(pady=20)
+        title_label.pack(pady=15)
         
-        # Printer selection frame
-        printer_frame = tk.Frame(self.root)
-        printer_frame.pack(pady=10, padx=20, fill=tk.X)
-        
-        tk.Label(printer_frame, text="Select Printer:", font=("Arial", 10)).pack(side=tk.LEFT, padx=5)
-        
-        self.printer_var = tk.StringVar()
-        self.printer_dropdown = ttk.Combobox(printer_frame, textvariable=self.printer_var, state="readonly", width=25)
-        self.printer_dropdown.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-        
-        # Refresh button
-        refresh_btn = tk.Button(self.root, text="🔄 Refresh Printers", command=self.load_printers)
-        refresh_btn.pack(pady=5)
-        
-        # Status
-        self.status_label = tk.Label(self.root, text="Status: Disconnected", fg="red", font=("Arial", 10))
+        # Connection status
+        self.status_label = tk.Label(self.root, text="Status: Disconnected", fg="red", font=("Arial", 11, "bold"))
         self.status_label.pack(pady=10)
         
-        # Test print button
-        test_btn = tk.Button(self.root, text="🖨️ Test Print", command=self.test_print)
-        test_btn.pack(pady=5)
+        # Printer selection
+        printer_frame = tk.LabelFrame(self.root, text="Printer Settings", padx=10, pady=10)
+        printer_frame.pack(pady=10, padx=20, fill=tk.X)
         
-        # Info label
-        info_label = tk.Label(self.root, text=f"Server: {SERVER_URL}\nSeller ID: {SELLER_ID}", 
-                             font=("Arial", 8), fg="gray")
-        info_label.pack(pady=10)
+        tk.Label(printer_frame, text="Select Printer:", font=("Arial", 10)).grid(row=0, column=0, sticky=tk.W, pady=5)
+        
+        self.printer_var = tk.StringVar()
+        self.printer_dropdown = ttk.Combobox(printer_frame, textvariable=self.printer_var, state="readonly", width=30)
+        self.printer_dropdown.grid(row=0, column=1, padx=10, pady=5, sticky=tk.EW)
+        
+        refresh_btn = tk.Button(printer_frame, text="🔄 Refresh", command=self.load_printers)
+        refresh_btn.grid(row=0, column=2, padx=5, pady=5)
+        
+        # Label size
+        tk.Label(printer_frame, text="Label Size:", font=("Arial", 10)).grid(row=1, column=0, sticky=tk.W, pady=5)
+        
+        self.size_var = tk.StringVar(value="2x2")
+        size_dropdown = ttk.Combobox(printer_frame, textvariable=self.size_var, state="readonly", width=30,
+                                     values=["2x2", "2x1", "3x2", "4x6"])
+        size_dropdown.grid(row=1, column=1, padx=10, pady=5, sticky=tk.EW)
+        
+        printer_frame.columnconfigure(1, weight=1)
+        
+        # Action buttons
+        button_frame = tk.Frame(self.root)
+        button_frame.pack(pady=15)
+        
+        test_btn = tk.Button(button_frame, text="🖨️ Test Print", command=self.test_print, width=20, height=2)
+        test_btn.pack(side=tk.LEFT, padx=5)
+        
+        reprint_btn = tk.Button(button_frame, text="🔄 Reprint Last", command=self.reprint_last, width=20, height=2)
+        reprint_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Info section
+        info_frame = tk.LabelFrame(self.root, text="Connection Info", padx=10, pady=10)
+        info_frame.pack(pady=10, padx=20, fill=tk.X)
+        
+        tk.Label(info_frame, text=f"Server: {SERVER_URL}", font=("Arial", 9), fg="gray").pack(anchor=tk.W)
+        tk.Label(info_frame, text=f"Seller ID: {SELLER_ID}", font=("Arial", 9), fg="gray").pack(anchor=tk.W)
+        
+        # Footer
+        footer_label = tk.Label(self.root, text="LodeLabels v1.0 | Auto-printing enabled", 
+                               font=("Arial", 8), fg="gray")
+        footer_label.pack(side=tk.BOTTOM, pady=10)
     
     def load_printers(self):
         """Load all available printers from Windows"""
@@ -74,9 +97,14 @@ class LodeLabelsAgent:
             self.printer_dropdown['values'] = printer_names
             
             if printer_names:
-                # Select first printer by default
-                self.printer_dropdown.current(0)
-                self.selected_printer = printer_names[0]
+                # Try to find PeriPage printer
+                peripage_printers = [p for p in printer_names if 'PPG' in p.upper() or 'PERIPAGE' in p.upper()]
+                if peripage_printers:
+                    self.printer_dropdown.set(peripage_printers[0])
+                else:
+                    self.printer_dropdown.current(0)
+                
+                self.selected_printer = self.printer_var.get()
                 print(f"✅ Found {len(printer_names)} printers")
             else:
                 messagebox.showwarning("No Printers", "No printers found on this system!")
@@ -98,7 +126,7 @@ class LodeLabelsAgent:
         test_image = Image.new("RGB", (406, 406), "white")  # 2x2 inches at 203 DPI
         from PIL import ImageDraw, ImageFont
         draw = ImageDraw.Draw(test_image)
-        draw.text((50, 150), "TEST PRINT", fill="black")
+        draw.text((50, 150), "TEST PRINT", fill="black", font=ImageFont.load_default())
         
         test_path = "test_label.png"
         test_image.save(test_path)
@@ -113,10 +141,22 @@ class LodeLabelsAgent:
         else:
             messagebox.showerror("Error", "Failed to print test label")
     
+    def reprint_last(self):
+        """Reprint the last label"""
+        if not self.last_label_path or not os.path.exists(self.last_label_path):
+            messagebox.showinfo("No Label", "No previous label to reprint")
+            return
+        
+        success = self.print_label(self.last_label_path)
+        
+        if success:
+            messagebox.showinfo("Success", "Last label reprinted!")
+        else:
+            messagebox.showerror("Error", "Failed to reprint label")
+    
     def print_label(self, image_path: str):
         """Print a label to the selected printer"""
         try:
-            # Update selected printer from dropdown
             self.selected_printer = self.printer_var.get()
             
             image = Image.open(image_path).convert("RGB")
@@ -176,6 +216,9 @@ class LodeLabelsAgent:
                             local_path = f"temp_label_{label_id}.png"
                             urllib.request.urlretrieve(image_url, local_path)
                             
+                            # Store as last label for reprint
+                            self.last_label_path = local_path
+                            
                             # Print it
                             success = self.print_label(local_path)
                             
@@ -187,9 +230,9 @@ class LodeLabelsAgent:
                                 "status": status
                             }))
                             
-                            # Clean up
-                            if os.path.exists(local_path):
-                                os.remove(local_path)
+                            # Keep the file for reprint (don't delete)
+                            # if os.path.exists(local_path):
+                            #     os.remove(local_path)
                                 
             except (websockets.exceptions.ConnectionClosed, 
                     websockets.exceptions.ConnectionClosedError,
