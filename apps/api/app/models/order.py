@@ -12,7 +12,7 @@ class Order(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 # ✅ RENAMED FROM Label TO SaleLabel
-class SaleLabel(Base):
+class Label(Base):
     __tablename__ = "labels"
     id = Column(String, primary_key=True, index=True)
     order_id = Column(String, ForeignKey("orders.id"), nullable=False)

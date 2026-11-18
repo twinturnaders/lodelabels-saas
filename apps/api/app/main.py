@@ -93,8 +93,8 @@ async def receive_whatnot_webhook(request: Request, db: Session = Depends(get_db
 
 @app.get("/labels/{label_id}/file")
 async def get_label_file(label_id: str, db: Session = Depends(get_db)):
-    from app.models.order import SaleLabel
-    sale_label = db.query(SaleLabel).filter(SaleLabel.id == label_id).first()
+    from app.models.order import Label
+    sale_label = db.query(Label).filter(Label.id == label_id).first()
     if not sale_label or not os.path.exists(sale_label.file_path):
         raise HTTPException(status_code=404, detail="Label not found")
     return FileResponse(sale_label.file_path, media_type="image/png")

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from app.models.order import Order, SaleLabel, ShowCounter, BuyerNumber
+from app.models.order import Order, Label, ShowCounter, BuyerNumber
 from app.models.webhook_event import WebhookEvent
 from app.services.label_service import create_text_label, LABELS_DIR
 
@@ -83,7 +83,7 @@ def process_order_created(event_id: str, db: Session):
     )
 
     # 7. Save the SaleLabel Record
-    sale_label = SaleLabel(
+    sale_label = Label(
         id=f"lbl_{current_item_number}_{current_buyer_number}_{safe_username}",
         order_id=order.id,
         seller_id=seller_id,
