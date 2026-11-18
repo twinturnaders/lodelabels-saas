@@ -13,7 +13,7 @@ class Order(Base):
 
 # ✅ RENAMED FROM Sale_Label TO SaleLabel
 class Sale_Label(Base):
-    __tablename__ = "sale_labels"
+    __tablename__ = "sold_labels"
     id = Column(String, primary_key=True, index=True)
     order_id = Column(String, ForeignKey("orders.id"), nullable=False)
     seller_id = Column(String, nullable=False, index=True)
