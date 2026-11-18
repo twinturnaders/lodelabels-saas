@@ -56,8 +56,8 @@ class LodeLabelsAgent:
         refresh_btn = tk.Button(printer_frame, text="🔄 Refresh", command=self.load_printers)
         refresh_btn.grid(row=0, column=2, padx=5, pady=5)
         
-        # Label size
-        tk.Label(printer_frame, text="Label Size:", font=("Arial", 10)).grid(row=1, column=0, sticky=tk.W, pady=5)
+        # Sale_Label size
+        tk.Label(printer_frame, text="Sale_Label Size:", font=("Arial", 10)).grid(row=1, column=0, sticky=tk.W, pady=5)
         
         self.size_var = tk.StringVar(value="2x2")
         size_dropdown = ttk.Combobox(printer_frame, textvariable=self.size_var, state="readonly", width=30,
@@ -144,7 +144,7 @@ class LodeLabelsAgent:
     def reprint_last(self):
         """Reprint the last label"""
         if not self.last_label_path or not os.path.exists(self.last_label_path):
-            messagebox.showinfo("No Label", "No previous label to reprint")
+            messagebox.showinfo("No Sale_Label", "No previous label to reprint")
             return
         
         success = self.print_label(self.last_label_path)

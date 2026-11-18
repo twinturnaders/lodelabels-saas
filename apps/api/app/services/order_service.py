@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from app.models.order import Order, Label, ShowCounter, BuyerNumber
+from app.models.order import Order, Sale_Label, ShowCounter, BuyerNumber
 from app.models.webhook_event import WebhookEvent
 from app.services.label_service import create_text_label, LABELS_DIR
 
@@ -70,7 +70,7 @@ def process_order_created(event_id: str, db: Session):
     current_item_number = counter.next_item_number
     counter.next_item_number += 1
 
-    # 6. Generate the Label PNG
+    # 6. Generate the Sale_Label PNG
     safe_username = username.replace("/", "_").replace("\\", "_")
     file_name = f"item_{current_item_number:03d}_buyer_{current_buyer_number:02d}_{safe_username}.png"
     output_path = LABELS_DIR / file_name
@@ -83,7 +83,7 @@ def process_order_created(event_id: str, db: Session):
     )
 
     # 7. Save the SaleLabel Record
-    sale_label = Label(
+    sale_label = Sale_Label(
         id=f"lbl_{current_item_number}_{current_buyer_number}_{safe_username}",
         order_id=order.id,
         seller_id=seller_id,
@@ -123,4 +123,4 @@ def process_order_created(event_id: str, db: Session):
             "item_number": current_item_number
         })
     )
-    print(f"✅ Generated Label and queued print job for @{username}")
+    print(f"✅ Generated Sale_Label and queued print job for @{username}")

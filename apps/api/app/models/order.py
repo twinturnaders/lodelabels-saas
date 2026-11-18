@@ -11,9 +11,9 @@ class Order(Base):
     raw_payload = Column(JSON, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-# ✅ RENAMED FROM Label TO SaleLabel
-class Label(Base):
-    __tablename__ = "labels"
+# ✅ RENAMED FROM Sale_Label TO SaleLabel
+class Sale_Label(Base):
+    __tablename__ = "sale_labels"
     id = Column(String, primary_key=True, index=True)
     order_id = Column(String, ForeignKey("orders.id"), nullable=False)
     seller_id = Column(String, nullable=False, index=True)
