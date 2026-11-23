@@ -17,7 +17,7 @@ def process_order_created(event_id: str, db: Session):
     # Extract buyer username (fallback to "unknown" if API structure changes)
     buyer = order_data.get("buyer", {})
     username = buyer.get("username") or buyer.get("display_name", "unknown").replace("@", "")
-    whatnot_order_id = order_data.get("order_id", "unknown")
+    whatnot_order_id = order_data.get("id", "unknown")
 
     # 2. Check for duplicate order
     existing_order = db.query(Order).filter(Order.whatnot_order_id == whatnot_order_id).first()
@@ -118,7 +118,7 @@ def process_order_created(event_id: str, db: Session):
             "type": "print_job",
             "job_id": print_job.id,
             "label_id": sale_label.id,
-            "image_url": f"http://127.0.0.1:8000/labels/{sale_label.id}/file",
+            "image_url": f"https://lodelabels.org/labels/{sale_label.id}/file",
             "username": username,
             "item_number": current_item_number
         })
